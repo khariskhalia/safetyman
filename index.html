@@ -1,0 +1,2083 @@
+HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Employee Monitoring & Safety System with Face Auto Detect</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f1f5f9; color: #1e293b; padding: 20px; }
+
+        .header {
+            background-color: #0f172a;
+            color: #ffffff;
+            padding: 16px 24px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .header h1 { font-size: 1.25rem; letter-spacing: 0.5px; }
+        .clock { font-size: 1.15rem; color: #38bdf8; font-weight: 700; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .card {
+            padding: 16px;
+            border-radius: 8px;
+            color: #ffffff;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            position: relative;
+        }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .card h3 { font-size: 0.8rem; text-transform: uppercase; margin-bottom: 6px; opacity: 0.9; }
+        .card .value { font-size: 1.8rem; font-weight: bold; }
+        
+        .card-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            gap: 5px;
+        }
+        .btn-card {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: #fff;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex: 1;
+        }
+        .btn-card:hover { background-color: rgba(255, 255, 255, 0.4); }
+        .btn-card-reset { background-color: rgba(239, 68, 68, 0.4); border-color: rgba(239, 68, 68, 0.6); }
+        .btn-card-reset:hover { background-color: rgba(239, 68, 68, 0.8); }
+
+        .bg-total { background-color: #2563eb; }
+        .bg-present { background-color: #16a34a; }
+        .bg-out { background-color: #dc2626; }
+        .bg-current { background-color: #d97706; }
+        .bg-visitor { background-color: #0891b2; }
+        .bg-nonreg { background-color: #8b5cf6; }
+        .bg-safety { background-color: #059669; }
+        .bg-safedays { background-color: #0d9488; }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 1100px) { .workspace { grid-template-columns: 1fr; } }
+
+        .panel {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .panel-title { 
+            font-size: 1rem; 
+            font-weight: 700; 
+            margin-bottom: 15px; 
+            color: #334155; 
+            border-bottom: 2px solid #f1f5f9; 
+            padding-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+        .input-group { display: flex; flex-direction: column; }
+        .input-group.full { grid-column: span 2; }
+        .input-group label { font-size: 0.8rem; font-weight: 600; margin-bottom: 5px; color: #475569; }
+        .input-group input, .input-group select {
+            padding: 9px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .btn-group { display: flex; gap: 10px; }
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer;
+            color: #ffffff;
+            transition: background 0.2s;
+        }
+        .btn-reg { background-color: #2563eb; width: 100%; }
+        .btn-reg:hover { background-color: #1d4ed8; }
+        .btn-vis-reg { background-color: #0891b2; width: 100%; }
+        .btn-vis-reg:hover { background-color: #0e7490; }
+        .btn-in { background-color: #16a34a; flex: 1; }
+        .btn-in:hover { background-color: #15803d; }
+        .btn-out { background-color: #dc2626; flex: 1; }
+        .btn-out:hover { background-color: #b91c1c; }
+        
+        .btn-vis-in { background-color: #0891b2; flex: 1; }
+        .btn-vis-in:hover { background-color: #0e7490; }
+        .btn-vis-out { background-color: #0284c7; flex: 1; }
+        .btn-vis-out:hover { background-color: #0369a1; }
+
+        .btn-nonreg-in { background-color: #8b5cf6; flex: 1; }
+        .btn-nonreg-in:hover { background-color: #7c3aed; }
+        .btn-nonreg-out { background-color: #6d28d9; flex: 1; }
+        .btn-nonreg-out:hover { background-color: #5b21b6; }
+
+        .btn-face-capture { background-color: #4f46e5; margin-top: 5px; }
+        .btn-face-capture:hover { background-color: #4338ca; }
+
+        .btn-print { background-color: #0284c7; }
+        .btn-clear { background-color: #94a3b8; }
+        .btn-action-unreg { background-color: #ef4444; padding: 4px 8px; font-size: 0.75rem; }
+        .btn-reset-all { background-color: #ef4444; font-size: 0.75rem; padding: 4px 8px; }
+        .btn-incident { background-color: #b91c1c; width: 100%; }
+
+        .tab-group { display: flex; gap: 8px; margin-bottom: 12px; }
+        .tab-btn {
+            padding: 6px 14px;
+            border: 1px solid #cbd5e1;
+            background-color: #f8fafc;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: #475569;
+        }
+        .tab-btn.active {
+            background-color: #2563eb;
+            color: #ffffff;
+            border-color: #2563eb;
+        }
+
+        .search-grid {
+            display: grid;
+            grid-template-columns: 2fr 1.5fr 1.5fr 1fr auto;
+            gap: 12px;
+            align-items: end;
+        }
+
+        .table-container { background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
+        th { background-color: #f8fafc; color: #475569; font-weight: 600; }
+        
+        .badge { padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; display: inline-block; }
+        .status-INSIDE { background-color: #dcfce7; color: #15803d; }
+        .status-OUT { background-color: #fee2e2; color: #b91c1c; }
+        .status-INCIDENT { background-color: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
+
+        .camera-container {
+            position: relative;
+            width: 100%;
+            height: 240px;
+            background-color: #0f172a;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .camera-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .face-status-overlay {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(15, 23, 42, 0.85);
+            color: #38bdf8;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            text-align: center;
+            font-weight: bold;
+            border: 1px solid #38bdf8;
+        }
+        .face-preview-img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #2563eb;
+            margin-top: 5px;
+        }
+
+        .toast-notification {
+            display: none;
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: #ffffff;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 50;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .directory-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-color: rgba(15, 23, 42, 0.95);
+            z-index: 10000;
+            padding: 30px;
+            box-sizing: border-box;
+            flex-direction: column;
+        }
+        .directory-modal-overlay.active { display: flex; }
+
+        .directory-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #ffffff;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #334155;
+            padding-bottom: 15px;
+        }
+        .directory-modal-header h2 { font-size: 1.8rem; color: #38bdf8; }
+
+        .btn-close-modal {
+            background-color: #ef4444;
+            color: #ffffff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .btn-close-modal:hover { background-color: #dc2626; }
+
+        .directory-modal-body {
+            flex-grow: 1;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow-y: auto;
+            padding: 25px;
+        }
+
+        .comp-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .comp-box {
+            background-color: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .comp-box h4 { font-size: 0.9rem; color: #64748b; text-transform: uppercase; margin-bottom: 10px; }
+        .comp-box .comp-val { font-size: 2.2rem; font-weight: 800; color: #0f172a; }
+        .comp-result-box {
+            background-color: #f0fdf4;
+            border: 2px solid #86efac;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            margin-top: 25px;
+        }
+        .comp-result-box h3 { font-size: 1.2rem; color: #166534; margin-bottom: 10px; }
+        .comp-result-box .result-val { font-size: 3.5rem; font-weight: 900; color: #15803d; }
+
+        .pwd-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 20000;
+            justify-content: center;
+            align-items: center;
+        }
+        .pwd-modal-overlay.active { display: flex; }
+        .pwd-modal-box {
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 12px;
+            width: 360px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .pwd-modal-box h3 { margin-bottom: 8px; color: #0f172a; font-size: 1.1rem; }
+        .pwd-modal-box p { font-size: 0.85rem; color: #64748b; margin-bottom: 16px; }
+        .pwd-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .pwd-input-wrapper input {
+            width: 100%;
+            padding: 10px 40px 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        .pwd-toggle-btn {
+            position: absolute;
+            right: 8px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            color: #64748b;
+            padding: 4px;
+        }
+        .pwd-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .pwd-modal-actions button {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-pwd-cancel { background-color: #e2e8f0; color: #475569; }
+        .btn-pwd-confirm { background-color: #2563eb; color: #ffffff; }
+
+        #idle-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: #0f172a; color: #ffffff;
+            z-index: 9999; padding: 30px; box-sizing: border-box;
+            flex-direction: column; justify-content: space-between; align-items: stretch;
+        }
+        #idle-overlay.active { display: flex; }
+        .idle-header { text-align: center; margin-bottom: 20px; }
+        .idle-header h2 { font-size: 2.8rem; color: #38bdf8; margin-bottom: 6px; }
+        .idle-grid { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); gap: 20px; flex-grow: 1; }
+        .idle-card { background-color: #1e293b; border: 1px solid #334155; padding: 20px; border-radius: 16px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: all 0.5s ease; position: relative; }
+        .idle-card h4 { font-size: 0.95rem; color: #38bdf8; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 1px; }
+        .idle-card .idle-card-sub { font-size: 1.1rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 15px; font-weight: 600; }
+        .idle-card .idle-val { font-size: 3.5rem; font-weight: 800; }
+
+        .box-live-datetime {
+            display: none;
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #38bdf8;
+            background-color: rgba(15, 23, 42, 0.8);
+            border: 2px solid #38bdf8;
+            padding: 10px 30px;
+            border-radius: 50px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+            letter-spacing: 1px;
+        }
+
+        #idle-countdown-bar {
+            text-align: center;
+            background-color: rgba(30, 41, 59, 0.9);
+            border: 2px solid #38bdf8;
+            border-radius: 50px;
+            padding: 10px 25px;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #38bdf8;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+            align-self: center;
+        }
+        #idle-countdown-bar span { color: #facc15; font-size: 1.6rem; margin: 0 5px; }
+
+        #idle-overlay.single-card-mode .idle-header { display: none; }
+        #idle-overlay.single-card-mode #idle-countdown-bar { display: inline-block; }
+        #idle-overlay.single-card-mode .idle-grid { display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; }
+        #idle-overlay.single-card-mode .idle-card { display: none; width: 100%; height: 100%; border-radius: 24px; border: 4px solid #38bdf8; box-shadow: 0 0 50px rgba(56, 189, 248, 0.3); }
+        #idle-overlay.single-card-mode .idle-card.active-single { display: flex; animation: zoomIn 0.6s ease forwards; }
+        #idle-overlay.single-card-mode .idle-card.active-single .box-live-datetime { display: block; }
+        #idle-overlay.single-card-mode .idle-card h4 { font-size: 1.8rem; color: #38bdf8; margin-bottom: 10px; letter-spacing: 2px; }
+        #idle-overlay.single-card-mode .idle-card .idle-card-sub { font-size: 2.5rem; color: #f8fafc; margin-bottom: 25px; letter-spacing: 1.5px; }
+        #idle-overlay.single-card-mode .idle-card .idle-val { font-size: 9rem; }
+
+        @keyframes zoomIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @media print {
+            body * { visibility: hidden; }
+            #printable-area, #printable-area * { visibility: visible; }
+            #printable-area { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- CUSTOM PASSWORD PROMPT MODAL -->
+    <div id="pwd-modal" class="pwd-modal-overlay">
+        <div class="pwd-modal-box">
+            <h3 id="pwd-modal-title">Authorization Required</h3>
+            <p id="pwd-modal-desc">Enter admin password to confirm this action:</p>
+            <div class="pwd-input-wrapper">
+                <input type="password" id="pwd-modal-input" placeholder="Enter password...">
+                <button type="button" class="pwd-toggle-btn" onclick="togglePasswordVisibility()" id="pwd-toggle-icon">👁️</button>
+            </div>
+            <div class="pwd-modal-actions">
+                <button class="btn-pwd-cancel" onclick="closePasswordModal(false)">Cancel</button>
+                <button class="btn-pwd-confirm" onclick="closePasswordModal(true)">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen Directory Modal -->
+    <div id="directory-modal" class="directory-modal-overlay">
+        <div class="directory-modal-header">
+            <h2 id="modal-directory-title">DIRECTORY</h2>
+            <button class="btn-close-modal" onclick="closeDirectoryModal()">CLOSE (ESC)</button>
+        </div>
+        <div class="directory-modal-body">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 70px; text-align: center;">No.</th>
+                        <th>Photo</th>
+                        <th>ID / Pass No.</th>
+                        <th>Name</th>
+                        <th>Dept / Company</th>
+                        <th>Position / Purpose</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="modal-directory-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Fullscreen Metrics Overlay Modal -->
+    <div id="metrics-modal" class="directory-modal-overlay">
+        <div class="directory-modal-header">
+            <h2 id="modal-metrics-title">PRESENT LOGS</h2>
+            <button class="btn-close-modal" onclick="closeMetricsModal()">CLOSE (ESC)</button>
+        </div>
+        <div class="directory-modal-body">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 70px; text-align: center;">No.</th>
+                        <th>Log ID</th>
+                        <th>Date</th>
+                        <th>ID / Pass No.</th>
+                        <th>Name</th>
+                        <th>Dept / Company</th>
+                        <th>Position / Purpose</th>
+                        <th>Incident Details</th>
+                        <th>Time In</th>
+                        <th>Time Out</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="modal-metrics-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Fullscreen Computation Overlay Modal -->
+    <div id="computation-modal" class="directory-modal-overlay">
+        <div class="directory-modal-header">
+            <h2 id="modal-comp-title">SAFETY COMPUTATION DETAILS</h2>
+            <button class="btn-close-modal" onclick="closeComputationModal()">CLOSE (ESC)</button>
+        </div>
+        <div class="directory-modal-body" id="modal-comp-body"></div>
+    </div>
+
+    <!-- Idle Dashboard Overlay -->
+    <div id="idle-overlay">
+        <div class="idle-header">
+            <h2>GCT / DST Attendance and Safe Man Hours Dashboard</h2>
+            <p>Idle Mode (Press <strong>F2</strong> or move mouse to exit)</p>
+            <div style="font-size: 1.5rem; margin-top: 10px; color: #38bdf8;" id="idle-clock">--:--:--</div>
+        </div>
+
+        <div id="idle-countdown-bar">
+            <span id="countdown-label">NEXT STEP IN:</span> <span id="countdown-sec">60</span> SECONDS
+        </div>
+
+        <div class="idle-grid">
+            <div class="idle-card">
+                <div class="box-live-datetime">--</div>
+                <h4>GCT / DST Transport & Safe Man Hours</h4>
+                <p class="idle-card-sub">Registered Employees</p>
+                <div class="idle-val" style="color: #60a5fa;" id="idle-total">0</div>
+            </div>
+            <div class="idle-card">
+                <div class="box-live-datetime">--</div>
+                <h4>GCT / DST Transport & Safe Man Hours</h4>
+                <p class="idle-card-sub">Total of Time-In Today</p>
+                <div class="idle-val" style="color: #4ade80;" id="idle-present">0</div>
+            </div>
+            <div class="idle-card">
+                <div class="box-live-datetime">--</div>
+                <h4>GCT / DST Transport & Safe Man Hours</h4>
+                <p class="idle-card-sub">Currently On-Site</p>
+                <div class="idle-val" style="color: #fbbf24;" id="idle-current">0</div>
+            </div>
+            <div class="idle-card">
+                <div class="box-live-datetime">--</div>
+                <h4>GCT / DST Transport & Safe Man Hours</h4>
+                <p class="idle-card-sub">Safety Man-Hours</p>
+                <div class="idle-val" style="color: #34d399;" id="idle-manhours">0 hrs</div>
+            </div>
+            <div class="idle-card">
+                <div class="box-live-datetime">--</div>
+                <h4>GCT / DST Transport & Safe Man Hours</h4>
+                <p class="idle-card-sub">Safe Days (No LTI)</p>
+                <div class="idle-val" style="color: #2dd4bf;" id="idle-safedays">0 Days</div>
+            </div>
+            <div class="idle-card">
+                <div class="box-live-datetime">--</div>
+                <h4>GCT / DST Transport & Safe Man Hours</h4>
+                <p class="idle-card-sub">Total of Time-Out Today</p>
+                <div class="idle-val" style="color: #f87171;" id="idle-out">0</div>
+            </div>
+            <div class="idle-card">
+                <div class="box-live-datetime">--</div>
+                <h4>GCT / DST Transport & Safe Man Hours</h4>
+                <p class="idle-card-sub">Visitors Present</p>
+                <div class="idle-val" style="color: #22d3ee;" id="idle-visitors">0</div>
+            </div>
+            <div class="idle-card">
+                <div class="box-live-datetime">--</div>
+                <h4>GCT / DST Transport & Safe Man Hours</h4>
+                <p class="idle-card-sub">Non-Regular Present</p>
+                <div class="idle-val" style="color: #c084fc;" id="idle-nonreg">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="header">
+        <h1>COMPANY EMPLOYEE & SAFETY MONITORING SYSTEM</h1>
+        <div class="clock" id="live-clock">Loading Clock...</div>
+    </div>
+
+    <!-- METRICS GRID -->
+    <div class="metrics-grid">
+        <div class="card bg-total" onclick="filterCardCategory('TOTAL_REG')">
+            <h3>Registered Employees</h3>
+            <div class="value" id="metric-total">0</div>
+            <div class="card-actions">
+                <button class="btn-card" onclick="event.stopPropagation(); filterCardCategory('TOTAL_REG')">VIEW</button>
+                <button class="btn-card btn-card-reset" onclick="event.stopPropagation(); resetCardMetric('TOTAL_REG')">RESET</button>
+            </div>
+        </div>
+        <div class="card bg-present" onclick="filterCardCategory('PRESENT')">
+            <h3>Total Time-In Today</h3>
+            <div class="value" id="metric-present">0</div>
+            <div class="card-actions">
+                <button class="btn-card" onclick="event.stopPropagation(); filterCardCategory('PRESENT')">VIEW</button>
+                <button class="btn-card btn-card-reset" onclick="event.stopPropagation(); resetCardMetric('PRESENT')">RESET</button>
+            </div>
+        </div>
+        <div class="card bg-out" onclick="filterCardCategory('OUT')">
+            <h3>Total Time-Out Today</h3>
+            <div class="value" id="metric-out">0</div>
+            <div class="card-actions">
+                <button class="btn-card" onclick="event.stopPropagation(); filterCardCategory('OUT')">VIEW</button>
+                <button class="btn-card btn-card-reset" onclick="event.stopPropagation(); resetCardMetric('OUT')">RESET</button>
+            </div>
+        </div>
+        <div class="card bg-current" onclick="filterCardCategory('CURRENT')">
+            <h3>Currently On-Site</h3>
+            <div class="value" id="metric-current">0</div>
+            <div class="card-actions">
+                <button class="btn-card" onclick="event.stopPropagation(); filterCardCategory('CURRENT')">VIEW</button>
+                <button class="btn-card btn-card-reset" onclick="event.stopPropagation(); resetCardMetric('CURRENT')">RESET</button>
+            </div>
+        </div>
+        <div class="card bg-visitor" onclick="filterCardCategory('VISITOR')">
+            <h3>Visitors Present</h3>
+            <div class="value" id="metric-visitors">0</div>
+            <div class="card-actions">
+                <button class="btn-card" onclick="event.stopPropagation(); filterCardCategory('VISITOR')">VIEW</button>
+                <button class="btn-card btn-card-reset" onclick="event.stopPropagation(); resetCardMetric('VISITOR')">RESET</button>
+            </div>
+        </div>
+        <div class="card bg-nonreg" onclick="filterCardCategory('NONREG')">
+            <h3>Non-Regular Present</h3>
+            <div class="value" id="metric-nonreg">0</div>
+            <div class="card-actions">
+                <button class="btn-card" onclick="event.stopPropagation(); filterCardCategory('NONREG')">VIEW</button>
+                <button class="btn-card btn-card-reset" onclick="event.stopPropagation(); resetCardMetric('NONREG')">RESET</button>
+            </div>
+        </div>
+        <div class="card bg-safety" onclick="showManHoursComputation()">
+            <h3>Safety Man-Hours</h3>
+            <div class="value" id="metric-manhours">0 hrs</div>
+            <div class="card-actions">
+                <button class="btn-card" onclick="event.stopPropagation(); showManHoursComputation()">COMPUTE</button>
+                <button class="btn-card btn-card-reset" onclick="event.stopPropagation(); resetCardMetric('MANHOURS')">RESET</button>
+            </div>
+        </div>
+        <div class="card bg-safedays" onclick="showSafeDaysComputation()">
+            <h3>Safe Days (No LTI)</h3>
+            <div class="value" id="metric-safedays">0 Days</div>
+            <div class="card-actions">
+                <button class="btn-card" onclick="event.stopPropagation(); showSafeDaysComputation()">COMPUTE</button>
+                <button class="btn-card btn-card-reset" onclick="event.stopPropagation(); resetCardMetric('SAFEDAYS')">RESET</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUTO FACE DETECT TERMINAL SECTION -->
+    <div class="panel" style="border: 2px solid #4f46e5; position: relative;">
+        
+        <div id="toast-message" class="toast-notification"></div>
+
+        <div class="panel-title" style="color: #4f46e5;">
+            <span>📸 Automatic Face Detection Time Terminal</span>
+            <span style="font-size: 0.8rem; font-weight: normal; color: #64748b;">Auto Scan & Time In / Out</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 300px 1fr; gap: 20px; align-items: center;">
+            <div>
+                <div class="camera-container">
+                    <video id="auto-face-video" class="camera-video" autoplay playsinline muted></video>
+                    <canvas id="face-canvas" style="display:none;"></canvas>
+                    <div class="face-status-overlay" id="face-status-text">Camera Standby</div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-face-capture" style="width:100%" onclick="toggleAutoFaceDetection()" id="btn-toggle-camera">START AUTO SCAN</button>
+                </div>
+            </div>
+            <div>
+                <h3 style="margin-bottom: 8px; font-size: 1.1rem;" id="face-detected-name">No Face Detected</h3>
+                <p style="color: #64748b; font-size: 0.9rem;" id="face-detected-info">Tumatapat lamang sa camera upang ma-auto detect ang inyong mukha at awtomatikong mag Time-In o Time-Out.</p>
+                <div style="margin-top: 15px; display: flex; gap: 10px; align-items: center;">
+                    <span id="face-match-confidence" class="badge" style="background-color: #cbd5e1; color: #475569;">Match: 0%</span>
+                    <span id="face-auto-action-status" class="badge" style="display:none;">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="workspace">
+        <div>
+            <!-- Regular Employee Registration -->
+            <div class="panel">
+                <div class="panel-title">
+                    <span>Employee Registration</span>
+                    <button class="btn btn-reset-all" onclick="resetAllData()">RESET SYSTEM</button>
+                </div>
+                <div class="form-grid">
+                    <div class="input-group"><label for="reg-id">ID Number</label><input type="text" id="reg-id" placeholder="e.g., EMP-101"></div>
+                    <div class="input-group"><label for="reg-name">Full Name</label><input type="text" id="reg-name" placeholder="e.g., Jane Doe"></div>
+                    <div class="input-group"><label for="reg-dept">Department</label><input type="text" id="reg-dept" placeholder="e.g., Finance"></div>
+                    <div class="input-group"><label for="reg-pos">Position</label><input type="text" id="reg-pos" placeholder="e.g., Senior Accountant"></div>
+                </div>
+                <div style="margin-bottom: 12px; display:flex; align-items:center; gap:10px;">
+                    <button class="btn btn-face-capture" type="button" onclick="captureFacePhoto('reg')">📸 CAPTURE & ENROLL FACE PHOTO</button>
+                    <img id="reg-face-preview" class="face-preview-img" src="" style="display:none;">
+                </div>
+                <button class="btn btn-reg" onclick="registerEmployee()">REGISTER EMPLOYEE</button>
+            </div>
+
+            <!-- STEP 2: Visitor / Non-Regular Registration -->
+            <div class="panel" style="margin-bottom:0; border-top: 3px solid #0891b2;">
+                <div class="panel-title" style="color: #0891b2;">
+                    <span>STEP 2: Visitor / Non-Regular Registration</span>
+                </div>
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label for="vis-reg-type">Type</label>
+                        <select id="vis-reg-type" onchange="applyRegistrationDefaults()">
+                            <option value="VISITOR">Visitor</option>
+                            <option value="NON-REGULAR">Non-Regular / Contractor</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="vis-reg-pass">Pass / ID No. (Company Input)</label>
+                        <input type="text" id="vis-reg-pass" placeholder="e.g., PASS-001 (or auto-generate)">
+                    </div>
+                    <div class="input-group"><label for="vis-reg-name">Full Name</label><input type="text" id="vis-reg-name" value="VISITOR"></div>
+                    <div class="input-group"><label for="vis-reg-company">Company / Purpose</label><input type="text" id="vis-reg-company" value="VISITOR"></div>
+                </div>
+                <div style="margin-bottom: 12px; display:flex; align-items:center; gap:10px;">
+                    <button class="btn btn-face-capture" type="button" onclick="captureFacePhoto('vis')">📸 CAPTURE FACE PHOTO</button>
+                    <img id="vis-face-preview" class="face-preview-img" src="" style="display:none;">
+                </div>
+                <button class="btn btn-vis-reg" onclick="registerVisitor()">REGISTER VISITOR / NON-REGULAR</button>
+            </div>
+        </div>
+
+        <div>
+            <!-- Regular Employee Terminal -->
+            <div class="panel" style="margin-bottom:20px;">
+                <div class="panel-title">Regular Employee Terminal</div>
+                <div class="input-group full" style="margin-bottom: 15px;">
+                    <label for="clock-id">Enter Employee ID Number</label>
+                    <input type="text" id="clock-id" placeholder="Type or Scan ID Number..." style="font-size: 1.1rem; padding: 12px;">
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-in" onclick="processQuickClock('IN')">TIME IN</button>
+                    <button class="btn btn-out" onclick="processQuickClock('OUT')">TIME OUT</button>
+                </div>
+            </div>
+
+            <!-- STEP 2: Visitor / Non-Regular Terminal -->
+            <div class="panel" style="margin-bottom:0; border-top: 3px solid #0891b2;">
+                <div class="panel-title" id="terminal-title" style="color: #0891b2;">STEP 2: Visitor / Non-Regular Time Terminal</div>
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label for="vis-type">Type</label>
+                        <select id="vis-type" onchange="updateTerminalMode()">
+                            <option value="VISITOR">Visitor</option>
+                            <option value="NON-REGULAR">Non-Regular / Contractor</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="vis-id">Pass / ID No.</label>
+                        <input type="text" id="vis-id" placeholder="Enter Pass ID" onblur="fetchVisitorDetails()">
+                    </div>
+                    <div class="input-group"><label for="vis-name">Full Name (Actual Name)</label><input type="text" id="vis-name" placeholder="e.g., Juan Dela Cruz"></div>
+                    <div class="input-group"><label for="vis-company">Company / Purpose (Actual)</label><input type="text" id="vis-company" placeholder="e.g., ABC Logistics / Meeting"></div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-vis-in" id="btn-terminal-in" onclick="processVisitorClock('IN')">VISITOR TIME IN</button>
+                    <button class="btn btn-vis-out" id="btn-terminal-out" onclick="processVisitorClock('OUT')">VISITOR TIME OUT</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Safety Incident Reporting Module -->
+    <div class="panel" style="border-left: 5px solid #dc2626;">
+        <div class="panel-title" style="color: #b91c1c;">
+            <span>Safety Incident Reporting Module</span>
+            <span style="font-size: 0.8rem; font-weight: normal; color: #64748b;">DOLE / OSHA Compliant Logging</span>
+        </div>
+        <div class="form-grid" style="grid-template-columns: 1fr 1fr 2.5fr 1fr;">
+            <div class="input-group">
+                <label for="inc-type">Incident Severity</label>
+                <select id="inc-type">
+                    <option value="NEAR-MISS">Near Miss</option>
+                    <option value="FIRST-AID">First Aid Case (FAC)</option>
+                    <option value="MEDICAL">Medical Treatment Case (MTC)</option>
+                    <option value="LTI">Lost Time Incident (LTI - Resets Safe Days)</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="inc-id">ID / Pass No.</label>
+                <input type="text" id="inc-id" placeholder="e.g., EMP-101 / PASS-001">
+            </div>
+            <div class="input-group">
+                <label for="inc-desc">Incident Details</label>
+                <input type="text" id="inc-desc" placeholder="Detalye ng Insidente / Paano nangyari...">
+            </div>
+            <div class="input-group" style="justify-content: flex-end;">
+                <button class="btn btn-incident" onclick="logSafetyIncident()">LOG INCIDENT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registered Directory -->
+    <div class="panel">
+        <div class="panel-title">
+            <span>Registered Directory</span>
+            <div class="tab-group">
+                <button class="tab-btn active" id="tab-emp" onclick="switchDirectoryTab('EMP')">Regular Employees</button>
+                <button class="tab-btn" id="tab-vis" onclick="switchDirectoryTab('VIS')">Visitors</button>
+                <button class="tab-btn" id="tab-nonreg" onclick="switchDirectoryTab('NONREG')">Non-Regulars</button>
+            </div>
+        </div>
+        <div class="table-container" style="max-height: 200px; overflow-y: auto;">
+            <table>
+                <thead>
+                    <tr><th>Photo</th><th>ID / Pass No.</th><th>Name</th><th>Dept / Company</th><th>Position / Purpose</th><th>Action</th></tr>
+                </thead>
+                <tbody id="directory-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-title">Search & Printable History</div>
+        <div class="search-grid" style="margin-bottom: 15px;">
+            <div class="input-group">
+                <label for="search-query">Search Records</label>
+                <input type="text" id="search-query" onkeyup="filterHistory()" placeholder="Search Keyword...">
+            </div>
+            <div class="input-group">
+                <label for="filter-category">Filter Category</label>
+                <select id="filter-category" onchange="filterHistory()">
+                    <option value="ALL">All Types</option>
+                    <option value="REGULAR">Regular Employees Only</option>
+                    <option value="VISITOR">Visitors Only</option>
+                    <option value="NONREGULAR">Non-Regular Employees / Contractors Only</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="filter-status">Current Status</label>
+                <select id="filter-status" onchange="filterHistory()">
+                    <option value="ALL">All Statuses</option>
+                    <option value="INSIDE">INSIDE (On-Site)</option>
+                    <option value="OUT">OUT (Timed Out)</option>
+                    <option value="INCIDENT">INCIDENT LOGS</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="filter-date">Date Log</label>
+                <input type="date" id="filter-date" onchange="filterHistory()">
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-print" onclick="window.print()">PRINT HISTORY</button>
+                <button class="btn btn-clear" onclick="resetSearch()">RESET</button>
+            </div>
+        </div>
+
+        <div class="table-container" id="printable-area">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Log ID</th>
+                        <th>Date</th>
+                        <th>ID / Pass No.</th>
+                        <th>Name</th>
+                        <th>Department / Company</th>
+                        <th>Position / Purpose</th>
+                        <th>Incident Details</th>
+                        <th>Time In</th>
+                        <th>Time Out</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="history-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // FIREBASE SETUP OPTION: Kung nais mong gamitin ang Firebase sa hinaharap, ilagay rito ang script.
+        const RESET_PASSWORD = "admin"; 
+        const IDLE_TIME_LIMIT = 60000;
+        const MAIN_IDLE_DURATION = 60;
+        const BOX_DURATION = 30;
+
+        let employeeDatabase = {};
+        let visitorDatabase = {};
+        let attendanceLogs = [];
+        let logCounter = 1000;
+        let passCounter = 100;
+        let idleTimer = null;
+        let cycleTimer = null;
+        let countdownTimer = null;
+        let secondsLeft = MAIN_IDLE_DURATION;
+        let currentCardIndex = 0;
+        let lastLtiDate = null;
+        let currentDirectoryTab = 'EMP';
+        let pwdResolveCallback = null;
+
+        let cameraStream = null;
+        let autoScanInterval = null;
+        let isAutoScanRunning = false;
+        let tempCapturedFaceReg = "";
+        let tempCapturedFaceVis = "";
+        let lastAutoClockedEmpId = "";
+        let lastAutoClockTime = 0;
+
+        const sampleCanvas1 = document.createElement('canvas');
+        const sampleCanvas2 = document.createElement('canvas');
+        sampleCanvas1.width = 32; sampleCanvas1.height = 32;
+        sampleCanvas2.width = 32; sampleCanvas2.height = 32;
+        const ctx1 = sampleCanvas1.getContext('2d');
+        const ctx2 = sampleCanvas2.getContext('2d');
+
+        window.onload = function() {
+            setInterval(updateClock, 1000);
+            updateClock();
+            loadFromStorage();
+            renderDirectory();
+            filterHistory();
+            setupHardwareScanner();
+            initIdleDetection();
+            applyRegistrationDefaults();
+            updateTerminalMode();
+        };
+
+        function showNotification(message, isSuccess = true) {
+            const toast = document.getElementById('toast-message');
+            toast.innerText = message;
+            toast.style.backgroundColor = isSuccess ? '#16a34a' : '#dc2626';
+            toast.style.display = 'block';
+
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        async function startCamera() {
+            try {
+                const video = document.getElementById('auto-face-video');
+                cameraStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+                video.srcObject = cameraStream;
+                document.getElementById('face-status-text').innerText = "Camera Active - Scanning...";
+                return true;
+            } catch (err) {
+                alert("Hindi mabuksan ang camera: " + err.message);
+                return false;
+            }
+        }
+
+        function stopCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+            document.getElementById('face-status-text').innerText = "Camera Standby";
+        }
+
+        async function toggleAutoFaceDetection() {
+            const btn = document.getElementById('btn-toggle-camera');
+            if (!isAutoScanRunning) {
+                const started = await startCamera();
+                if (started) {
+                    isAutoScanRunning = true;
+                    btn.innerText = "STOP AUTO SCAN";
+                    btn.style.backgroundColor = "#dc2626";
+                    autoScanInterval = setInterval(performFaceRecognitionScan, 1500);
+                }
+            } else {
+                isAutoScanRunning = false;
+                clearInterval(autoScanInterval);
+                stopCamera();
+                btn.innerText = "START AUTO SCAN";
+                btn.style.backgroundColor = "#4f46e5";
+                document.getElementById('face-detected-name').innerText = "No Face Detected";
+                document.getElementById('face-match-confidence').innerText = "Match: 0%";
+            }
+        }
+
+        function captureFacePhoto(target) {
+            const video = document.getElementById('auto-face-video');
+            if (!cameraStream) {
+                startCamera().then(success => {
+                    if (success) setTimeout(() => processCapture(target), 1000);
+                });
+            } else {
+                processCapture(target);
+            }
+        }
+
+        function processCapture(target) {
+            const video = document.getElementById('auto-face-video');
+            const canvas = document.getElementById('face-canvas');
+            canvas.width = video.videoWidth || 300;
+            canvas.height = video.videoHeight || 240;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+
+            if (target === 'reg') {
+                tempCapturedFaceReg = dataUrl;
+                const img = document.getElementById('reg-face-preview');
+                img.src = dataUrl;
+                img.style.display = 'inline-block';
+            } else {
+                tempCapturedFaceVis = dataUrl;
+                const img = document.getElementById('vis-face-preview');
+                img.src = dataUrl;
+                img.style.display = 'inline-block';
+            }
+            alert("Face Photo Enrolled successfully!");
+        }
+
+        function getFaceFeatureMap(imageSource, ctxTarget) {
+            ctxTarget.drawImage(imageSource, 0, 0, 32, 32);
+            const imgData = ctxTarget.getImageData(0, 0, 32, 32).data;
+            let grayValues = [];
+            for (let i = 0; i < imgData.length; i += 4) {
+                let gray = 0.299 * imgData[i] + 0.587 * imgData[i + 1] + 0.114 * imgData[i + 2];
+                grayValues.push(gray);
+            }
+            return grayValues;
+        }
+
+        function compareFaceFeatures(featuresA, featuresB) {
+            if (!featuresA || !featuresB || featuresA.length !== featuresB.length) return 0;
+            let totalDiff = 0;
+            for (let i = 0; i < featuresA.length; i++) {
+                totalDiff += Math.abs(featuresA[i] - featuresB[i]);
+            }
+            let avgDiff = totalDiff / featuresA.length;
+            let similarity = Math.max(0, 100 - (avgDiff / 2.55));
+            return similarity;
+        }
+
+        function performFaceRecognitionScan() {
+            if (!isAutoScanRunning) return;
+
+            const video = document.getElementById('auto-face-video');
+            const canvas = document.getElementById('face-canvas');
+            if (!video.videoWidth) return;
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const currentLiveFeatures = getFaceFeatureMap(video, ctx1);
+
+            let matchedId = null;
+            let matchedPerson = null;
+            let highestScore = 0;
+            const MATCH_THRESHOLD = 65;
+
+            const allPersons = { ...employeeDatabase, ...visitorDatabase };
+            const keys = Object.keys(allPersons);
+
+            if (keys.length === 0) return;
+
+            keys.forEach(id => {
+                const person = allPersons[id];
+                if (person.facePhoto) {
+                    const storedImg = new Image();
+                    storedImg.src = person.facePhoto;
+
+                    const registeredFeatures = getFaceFeatureMap(storedImg, ctx2);
+                    const similarityScore = compareFaceFeatures(currentLiveFeatures, registeredFeatures);
+
+                    if (similarityScore > highestScore) {
+                        highestScore = similarityScore;
+                        matchedId = id;
+                        matchedPerson = person;
+                    }
+                }
+            });
+
+            if (matchedId && matchedPerson && highestScore >= MATCH_THRESHOLD) {
+                if (lastAutoClockedEmpId === matchedId && (Date.now() - lastAutoClockTime < 6000)) {
+                    return;
+                }
+
+                document.getElementById('face-detected-name').innerText = `${matchedPerson.name} (${matchedId})`;
+                document.getElementById('face-detected-info').innerText = `Dept: ${matchedPerson.dept} | Pos: ${matchedPerson.pos}`;
+                document.getElementById('face-match-confidence').innerText = `Match: ${highestScore.toFixed(1)}%`;
+                document.getElementById('face-match-confidence').style.backgroundColor = '#16a34a';
+                document.getElementById('face-match-confidence').style.color = '#fff';
+
+                const today = getDateString();
+                const activeRecord = attendanceLogs.find(log => log.empId === matchedId && log.date === today && log.status === 'INSIDE');
+
+                if (!activeRecord) {
+                    if (employeeDatabase[matchedId]) {
+                        document.getElementById('clock-id').value = matchedId;
+                        processQuickClock('IN');
+                    } else {
+                        document.getElementById('vis-id').value = matchedId;
+                        processVisitorClock('IN');
+                    }
+                    showNotification(`✅ SUCCESSFUL TIME IN: ${matchedPerson.name}`, true);
+                } else {
+                    if (employeeDatabase[matchedId]) {
+                        document.getElementById('clock-id').value = matchedId;
+                        processQuickClock('OUT');
+                    } else {
+                        document.getElementById('vis-id').value = matchedId;
+                        processVisitorClock('OUT');
+                    }
+                    showNotification(`🔴 SUCCESSFUL TIME OUT: ${matchedPerson.name}`, false);
+                }
+
+                lastAutoClockedEmpId = matchedId;
+                lastAutoClockTime = Date.now();
+            } else {
+                document.getElementById('face-detected-name').innerText = "Scanning / Unrecognized Face";
+                document.getElementById('face-detected-info').innerText = "Manatiling nakatapat sa camera upang ma-scan nang maayos.";
+                document.getElementById('face-match-confidence').innerText = `Match: ${highestScore.toFixed(1)}%`;
+                document.getElementById('face-match-confidence').style.backgroundColor = '#cbd5e1';
+                document.getElementById('face-match-confidence').style.color = '#475569';
+            }
+        }
+
+        function requestPassword(description) {
+            return new Promise((resolve) => {
+                pwdResolveCallback = resolve;
+                const modal = document.getElementById('pwd-modal');
+                const desc = document.getElementById('pwd-modal-desc');
+                const input = document.getElementById('pwd-modal-input');
+                
+                desc.innerText = description || "Enter password to authorize this action:";
+                input.value = "";
+                input.type = "password";
+                document.getElementById('pwd-toggle-icon').innerText = "👁️";
+                
+                modal.classList.add('active');
+                input.focus();
+                
+                input.onkeypress = function(e) {
+                    if (e.key === 'Enter') closePasswordModal(true);
+                };
+            });
+        }
+
+        function togglePasswordVisibility() {
+            const input = document.getElementById('pwd-modal-input');
+            const icon = document.getElementById('pwd-toggle-icon');
+            if (input.type === "password") {
+                input.type = "text";
+                icon.innerText = "🙈";
+            } else {
+                input.type = "password";
+                icon.innerText = "👁️";
+            }
+        }
+
+        function closePasswordModal(isConfirmed) {
+            const modal = document.getElementById('pwd-modal');
+            const input = document.getElementById('pwd-modal-input');
+            modal.classList.remove('active');
+            
+            if (pwdResolveCallback) {
+                if (isConfirmed) {
+                    pwdResolveCallback(input.value);
+                } else {
+                    pwdResolveCallback(null);
+                }
+                pwdResolveCallback = null;
+            }
+        }
+
+        function applyRegistrationDefaults() {
+            const type = document.getElementById('vis-reg-type').value;
+            const nameField = document.getElementById('vis-reg-name');
+            const companyField = document.getElementById('vis-reg-company');
+
+            if (type === 'VISITOR') {
+                nameField.value = 'VISITOR';
+                companyField.value = 'VISITOR';
+            } else {
+                nameField.value = 'NON REGULAR';
+                companyField.value = 'NON REGULAR WORK';
+            }
+        }
+
+        function updateTerminalMode() {
+            const type = document.getElementById('vis-type').value;
+            const btnIn = document.getElementById('btn-terminal-in');
+            const btnOut = document.getElementById('btn-terminal-out');
+
+            if (type === 'VISITOR') {
+                btnIn.innerText = 'VISITOR TIME IN';
+                btnOut.innerText = 'VISITOR TIME OUT';
+                btnIn.className = 'btn btn-vis-in';
+                btnOut.className = 'btn btn-vis-out';
+            } else {
+                btnIn.innerText = 'NON-REGULAR TIME IN';
+                btnOut.innerText = 'NON-REGULAR TIME OUT';
+                btnIn.className = 'btn btn-nonreg-in';
+                btnOut.className = 'btn btn-nonreg-out';
+            }
+        }
+
+        function fetchVisitorDetails() {
+            const passId = document.getElementById('vis-id').value.trim();
+            if (passId && visitorDatabase[passId]) {
+                const info = visitorDatabase[passId];
+                if (info.name !== 'VISITOR' && info.name !== 'NON REGULAR') {
+                    document.getElementById('vis-name').value = info.name;
+                }
+                if (info.dept !== 'VISITOR' && info.dept !== 'NON REGULAR WORK') {
+                    document.getElementById('vis-company').value = info.dept;
+                }
+            }
+        }
+
+        function registerVisitor() {
+            const type = document.getElementById('vis-reg-type').value;
+            let passId = document.getElementById('vis-reg-pass').value.trim();
+            const name = document.getElementById('vis-reg-name').value.trim();
+            const company = document.getElementById('vis-reg-company').value.trim();
+
+            if (!passId) {
+                passCounter++;
+                const prefix = type === 'VISITOR' ? 'VIS' : 'NONREG';
+                passId = `${prefix}-${passCounter}`;
+            }
+
+            visitorDatabase[passId] = { 
+                name: name, 
+                dept: company, 
+                pos: type, 
+                facePhoto: tempCapturedFaceVis || null 
+            };
+
+            saveToStorage();
+            alert(`${type} Card/Pass ID: ${passId} registered successfully!`);
+            
+            document.getElementById('vis-type').value = type;
+            document.getElementById('vis-id').value = passId;
+            document.getElementById('vis-name').value = '';
+            document.getElementById('vis-company').value = '';
+
+            updateTerminalMode();
+            applyRegistrationDefaults();
+            document.getElementById('vis-reg-pass').value = '';
+            switchDirectoryTab(type === 'VISITOR' ? 'VIS' : 'NONREG');
+            updateDashboardMetrics();
+        }
+
+        function processVisitorClock(actionType) {
+            const type = document.getElementById('vis-type').value;
+            let passId = document.getElementById('vis-id').value.trim();
+            let inputName = document.getElementById('vis-name').value.trim();
+            let inputCompany = document.getElementById('vis-company').value.trim();
+
+            if (!passId) {
+                alert("Please enter Pass / ID No.");
+                return;
+            }
+
+            let registeredName = visitorDatabase[passId] ? visitorDatabase[passId].name : type;
+            let registeredCompany = visitorDatabase[passId] ? visitorDatabase[passId].dept : (type === 'VISITOR' ? 'VISITOR' : 'NON REGULAR WORK');
+
+            let finalName = inputName || registeredName;
+            let finalCompany = inputCompany || registeredCompany;
+
+            const today = getDateString();
+            const timeNow = getTimeString();
+
+            let activeRecord = attendanceLogs.find(log => log.empId === passId && log.date === today && log.status === 'INSIDE');
+
+            if (actionType === 'IN') {
+                if (activeRecord) {
+                    alert(`${type} with Pass ID ${passId} is already timed IN.`);
+                    return;
+                }
+                logCounter++;
+                attendanceLogs.unshift({
+                    logId: `LOG-${logCounter}`,
+                    date: today,
+                    empId: passId,
+                    name: finalName,
+                    dept: `${finalCompany} [${type}]`,
+                    pos: type,
+                    incidentDetails: '--',
+                    timeIn: timeNow,
+                    timeInTimestamp: Date.now(),
+                    timeOut: '--',
+                    timeOutTimestamp: null,
+                    status: 'INSIDE'
+                });
+                alert(`${type} (${finalName}) Timed IN successfully with Pass ID: ${passId}`);
+            } else if (actionType === 'OUT') {
+                if (!activeRecord) {
+                    alert(`No active Time-In log found for Pass ID ${passId} today.`);
+                    return;
+                }
+                activeRecord.timeOut = timeNow;
+                activeRecord.timeOutTimestamp = Date.now();
+                activeRecord.status = 'OUT';
+                alert(`${type} (${activeRecord.name}) Timed OUT successfully.`);
+            }
+
+            saveToStorage();
+            clearVisitorForm();
+            filterHistory();
+        }
+
+        function saveToStorage() {
+            localStorage.setItem('employeeDatabase', JSON.stringify(employeeDatabase));
+            localStorage.setItem('visitorDatabase', JSON.stringify(visitorDatabase));
+            localStorage.setItem('attendanceLogs', JSON.stringify(attendanceLogs));
+            localStorage.setItem('logCounter', logCounter.toString());
+            localStorage.setItem('passCounter', passCounter.toString());
+            if (lastLtiDate) localStorage.setItem('lastLtiDate', lastLtiDate);
+        }
+
+        function loadFromStorage() {
+            const storedEmps = localStorage.getItem('employeeDatabase');
+            const storedVisitors = localStorage.getItem('visitorDatabase');
+            const storedLogs = localStorage.getItem('attendanceLogs');
+            const storedCounter = localStorage.getItem('logCounter');
+            const storedPassCounter = localStorage.getItem('passCounter');
+            const storedLtiDate = localStorage.getItem('lastLtiDate');
+
+            if (storedEmps) employeeDatabase = JSON.parse(storedEmps);
+            if (storedVisitors) visitorDatabase = JSON.parse(storedVisitors);
+            if (storedLogs) attendanceLogs = JSON.parse(storedLogs);
+            if (storedCounter) logCounter = parseInt(storedCounter, 10);
+            if (storedPassCounter) passCounter = parseInt(storedPassCounter, 10);
+            if (storedLtiDate) lastLtiDate = storedLtiDate;
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleString('en-US', {
+                weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+            });
+            document.getElementById('live-clock').innerText = timeStr;
+            document.getElementById('idle-clock').innerText = timeStr;
+
+            document.querySelectorAll('.box-live-datetime').forEach(el => {
+                el.innerText = timeStr;
+            });
+
+            updateDashboardMetrics();
+        }
+
+        function getTimeString() { return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }); }
+        function getDateString() { return new Date().toISOString().split('T')[0]; }
+
+        function initIdleDetection() {
+            const resetTimer = () => {
+                hideIdleScreen();
+                clearTimeout(idleTimer);
+                idleTimer = setTimeout(showIdleScreen, IDLE_TIME_LIMIT);
+            };
+            window.onload = resetTimer;
+            window.onmousemove = resetTimer;
+            window.onkeypress = resetTimer;
+            window.addEventListener('keydown', function (e) {
+                if (e.key === 'F2') { e.preventDefault(); toggleIdleScreen(); }
+                if (e.key === 'Escape') { 
+                    closeDirectoryModal(); 
+                    closeMetricsModal();
+                    closeComputationModal();
+                }
+            });
+        }
+
+        function toggleIdleScreen() {
+            const overlay = document.getElementById('idle-overlay');
+            if (overlay.classList.contains('active')) hideIdleScreen();
+            else showIdleScreen();
+        }
+
+        function showIdleScreen() {
+            updateDashboardMetrics();
+            const overlay = document.getElementById('idle-overlay');
+            overlay.classList.remove('single-card-mode');
+            overlay.classList.add('active');
+
+            const cards = document.querySelectorAll('.idle-card');
+            cards.forEach(c => c.classList.remove('active-single'));
+
+            clearTimeout(cycleTimer);
+            clearInterval(countdownTimer);
+
+            document.getElementById('countdown-label').innerText = "BOX MODE IN:";
+            startCountdown(MAIN_IDLE_DURATION, startFullscreenCardCycle);
+        }
+
+        function hideIdleScreen() {
+            const overlay = document.getElementById('idle-overlay');
+            overlay.classList.remove('active');
+            overlay.classList.remove('single-card-mode');
+            
+            clearTimeout(cycleTimer);
+            clearInterval(countdownTimer);
+
+            const cards = document.querySelectorAll('.idle-card');
+            cards.forEach(c => c.classList.remove('active-single'));
+        }
+
+        function startCountdown(duration, callback) {
+            clearInterval(countdownTimer);
+            secondsLeft = duration;
+            document.getElementById('countdown-sec').innerText = secondsLeft;
+
+            countdownTimer = setInterval(() => {
+                secondsLeft--;
+                if (secondsLeft <= 0) {
+                    clearInterval(countdownTimer);
+                    if (callback) callback();
+                } else {
+                    document.getElementById('countdown-sec').innerText = secondsLeft;
+                }
+            }, 1000);
+        }
+
+        function startFullscreenCardCycle() {
+            const overlay = document.getElementById('idle-overlay');
+            if (!overlay.classList.contains('active')) return;
+
+            overlay.classList.add('single-card-mode');
+            document.getElementById('countdown-label').innerText = "NEXT BOX IN:";
+            currentCardIndex = 0;
+
+            runCardStep();
+        }
+
+        function runCardStep() {
+            const cards = document.querySelectorAll('.idle-card');
+            
+            if (currentCardIndex < cards.length) {
+                showSingleCard(currentCardIndex);
+                startCountdown(BOX_DURATION, () => {
+                    currentCardIndex++;
+                    runCardStep();
+                });
+            } else {
+                showIdleScreen();
+            }
+        }
+
+        function showSingleCard(index) {
+            const cards = document.querySelectorAll('.idle-card');
+            cards.forEach(c => c.classList.remove('active-single'));
+            if (cards[index]) {
+                cards[index].classList.add('active-single');
+            }
+        }
+
+        function registerEmployee() {
+            const id = document.getElementById('reg-id').value.trim();
+            const name = document.getElementById('reg-name').value.trim();
+            const dept = document.getElementById('reg-dept').value.trim();
+            const pos = document.getElementById('reg-pos').value.trim();
+
+            if (!id || !name || !dept || !pos) {
+                alert("Please fill in all employee registration fields.");
+                return;
+            }
+
+            employeeDatabase[id] = { 
+                name: name, 
+                dept: dept, 
+                pos: pos, 
+                facePhoto: tempCapturedFaceReg || null 
+            };
+
+            saveToStorage();
+            alert(`Employee ${name} (${id}) registered successfully.`);
+            clearRegForm();
+            renderDirectory();
+            updateDashboardMetrics();
+        }
+
+        function processQuickClock(actionType) {
+            const id = document.getElementById('clock-id').value.trim();
+
+            if (!id) { alert("Please enter an Employee ID."); return; }
+            if (!employeeDatabase[id]) { alert(`ID "${id}" is not registered.`); return; }
+
+            const emp = employeeDatabase[id];
+            const today = getDateString();
+            const timeNow = getTimeString();
+
+            let activeRecord = attendanceLogs.find(log => log.empId === id && log.date === today && log.status === 'INSIDE');
+
+            if (actionType === 'IN') {
+                if (activeRecord) { alert(`Employee ${emp.name} is already timed IN.`); return; }
+                logCounter++;
+                attendanceLogs.unshift({
+                    logId: `LOG-${logCounter}`, date: today, empId: id, name: emp.name,
+                    dept: emp.dept, pos: emp.pos, incidentDetails: '--', timeIn: timeNow, timeInTimestamp: Date.now(),
+                    timeOut: '--', timeOutTimestamp: null, status: 'INSIDE'
+                });
+            } else if (actionType === 'OUT') {
+                if (!activeRecord) { alert(`No active Time-In log found for ${emp.name}.`); return; }
+                activeRecord.timeOut = timeNow;
+                activeRecord.timeOutTimestamp = Date.now();
+                activeRecord.status = 'OUT';
+            }
+
+            saveToStorage();
+            document.getElementById('clock-id').value = '';
+            filterHistory();
+        }
+
+        function logSafetyIncident() {
+            const type = document.getElementById('inc-type').value;
+            const targetId = document.getElementById('inc-id').value.trim();
+            const desc = document.getElementById('inc-desc').value.trim();
+
+            if (!targetId) { alert("Paki-lagay ang ID / Pass No."); return; }
+            if (!desc) { alert("Paki-lagay ang mga detalye ng insidente."); return; }
+
+            let name = 'N/A';
+            let dept = 'HSE DEPT';
+            let pos = `[${type}]`;
+
+            if (employeeDatabase[targetId]) {
+                name = employeeDatabase[targetId].name;
+                dept = employeeDatabase[targetId].dept;
+                pos = `${employeeDatabase[targetId].pos} [${type}]`;
+            } else if (visitorDatabase[targetId]) {
+                name = visitorDatabase[targetId].name;
+                dept = visitorDatabase[targetId].dept;
+                pos = `${visitorDatabase[targetId].pos} [${type}]`;
+            } else {
+                alert(`Ang ID/Pass No. na "${targetId}" ay hindi nakatala sa system. Mangyaring irehistro muna ito.`);
+                return;
+            }
+
+            const today = getDateString();
+            const timeNow = getTimeString();
+
+            if (type === 'LTI') {
+                if (confirm("CONFIRM LTI REPORT: Magre-reset ito sa SAFE DAYS COUNTER pabalik sa 0. Itutuloy mo ba?")) {
+                    lastLtiDate = today;
+                } else return;
+            }
+
+            logCounter++;
+            attendanceLogs.unshift({
+                logId: `INC-${logCounter}`, 
+                date: today, 
+                empId: targetId,
+                name: name, 
+                dept: dept, 
+                pos: pos,
+                incidentDetails: desc,
+                timeIn: timeNow, 
+                timeOut: '--', 
+                timeInTimestamp: null, 
+                timeOutTimestamp: null, 
+                status: 'INCIDENT'
+            });
+
+            document.getElementById('inc-id').value = '';
+            document.getElementById('inc-desc').value = '';
+            saveToStorage();
+            filterHistory();
+        }
+
+        async function resetCardMetric(category) {
+            const pwd = await requestPassword("Enter admin password to reset this metric:");
+            if (pwd === null) return;
+            if (pwd !== RESET_PASSWORD) {
+                alert("Incorrect password.");
+                return;
+            }
+
+            const today = getDateString();
+
+            if (category === 'TOTAL_REG') {
+                if (confirm("Reset Registered Employees database?")) {
+                    employeeDatabase = {};
+                }
+            } else if (category === 'PRESENT') {
+                if (confirm("Reset Today's Time-In logs?")) {
+                    attendanceLogs = attendanceLogs.filter(log => !(log.date === today && log.status !== 'INCIDENT'));
+                }
+            } else if (category === 'OUT') {
+                if (confirm("Reset Today's Time-Out logs?")) {
+                    attendanceLogs.forEach(log => {
+                        if (log.date === today && log.status === 'OUT') {
+                            log.status = 'INSIDE';
+                            log.timeOut = '--';
+                        }
+                    });
+                }
+            } else if (category === 'CURRENT') {
+                if (confirm("Force Time-Out for all currently On-Site personnel today?")) {
+                    const timeNow = getTimeString();
+                    attendanceLogs.forEach(log => {
+                        if (log.date === today && log.status === 'INSIDE') {
+                            log.status = 'OUT';
+                            log.timeOut = timeNow;
+                        }
+                    });
+                }
+            } else if (category === 'VISITOR') {
+                if (confirm("Reset Visitors Present logs for today?")) {
+                    attendanceLogs = attendanceLogs.filter(log => !(log.date === today && log.pos.includes('VISITOR')));
+                }
+            } else if (category === 'NONREG') {
+                if (confirm("Reset Non-Regulars Present logs for today?")) {
+                    attendanceLogs = attendanceLogs.filter(log => !(log.date === today && log.pos.includes('NON-REGULAR')));
+                }
+            } else if (category === 'MANHOURS' || category === 'SAFEDAYS') {
+                if (confirm("Reset Safe Days & Man-Hours counter to 0?")) {
+                    lastLtiDate = today;
+                }
+            }
+
+            saveToStorage();
+            renderDirectory();
+            filterHistory();
+            updateDashboardMetrics();
+            alert("Metric reset successfully.");
+        }
+
+        function filterHistory() {
+            const query = document.getElementById('search-query').value.toLowerCase().trim();
+            const categoryFilter = document.getElementById('filter-category').value;
+            const statusFilter = document.getElementById('filter-status').value;
+            const dateFilter = document.getElementById('filter-date').value;
+
+            const filtered = attendanceLogs.filter(log => {
+                const matchesQuery = log.empId.toLowerCase().includes(query) ||
+                                     log.name.toLowerCase().includes(query) ||
+                                     log.dept.toLowerCase().includes(query) ||
+                                     log.pos.toLowerCase().includes(query) ||
+                                     (log.incidentDetails && log.incidentDetails.toLowerCase().includes(query));
+                
+                const matchesStatus = (statusFilter === 'ALL') || (log.status === statusFilter);
+                const matchesDate = !dateFilter || (log.date === dateFilter);
+
+                let matchesCategory = true;
+                const isVisitor = log.pos.includes('VISITOR');
+                const isNonReg = log.pos.includes('NON-REGULAR');
+                
+                if (categoryFilter === 'REGULAR') {
+                    matchesCategory = !isVisitor && !isNonReg && log.status !== 'INCIDENT';
+                } else if (categoryFilter === 'VISITOR') {
+                    matchesCategory = isVisitor;
+                } else if (categoryFilter === 'NONREGULAR') {
+                    matchesCategory = isNonReg;
+                }
+
+                return matchesQuery && matchesStatus && matchesDate && matchesCategory;
+            });
+
+            renderHistoryTable(filtered);
+            updateDashboardMetrics();
+        }
+
+        function renderHistoryTable(data) {
+            const tbody = document.getElementById('history-table-body');
+            tbody.innerHTML = '';
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:#94a3b8; padding:20px;">No records found.</td></tr>`;
+                return;
+            }
+            data.forEach(log => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${log.logId}</strong></td>
+                    <td>${log.date}</td>
+                    <td>${log.empId}</td>
+                    <td>${log.name}</td>
+                    <td>${log.dept}</td>
+                    <td>${log.pos}</td>
+                    <td>${log.incidentDetails || '--'}</td>
+                    <td>${log.timeIn}</td>
+                    <td>${log.timeOut}</td>
+                    <td><span class="badge status-${log.status}">${log.status}</span></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function switchDirectoryTab(tab) {
+            currentDirectoryTab = tab;
+            document.getElementById('tab-emp').classList.toggle('active', tab === 'EMP');
+            document.getElementById('tab-vis').classList.toggle('active', tab === 'VIS');
+            document.getElementById('tab-nonreg').classList.toggle('active', tab === 'NONREG');
+            
+            renderDirectory();
+            openDirectoryModal(tab);
+        }
+
+        function openDirectoryModal(tab) {
+            const modal = document.getElementById('directory-modal');
+            const title = document.getElementById('modal-directory-title');
+            
+            let tabName = '';
+            if (tab === 'EMP') tabName = 'REGULAR EMPLOYEES DIRECTORY';
+            else if (tab === 'VIS') tabName = 'REGISTERED VISITORS DIRECTORY';
+            else if (tab === 'NONREG') tabName = 'NON-REGULAR / CONTRACTORS DIRECTORY';
+
+            title.innerText = tabName;
+            renderModalDirectoryTable();
+            modal.classList.add('active');
+        }
+
+        function closeDirectoryModal() {
+            document.getElementById('directory-modal').classList.remove('active');
+        }
+
+        function renderModalDirectoryTable() {
+            const tbody = document.getElementById('modal-directory-table-body');
+            tbody.innerHTML = '';
+            
+            let filteredKeys = [];
+            let currentDb = {};
+
+            if (currentDirectoryTab === 'EMP') {
+                currentDb = employeeDatabase;
+                filteredKeys = Object.keys(employeeDatabase);
+            } else if (currentDirectoryTab === 'VIS') {
+                currentDb = visitorDatabase;
+                filteredKeys = Object.keys(visitorDatabase).filter(id => visitorDatabase[id].pos === 'VISITOR');
+            } else if (currentDirectoryTab === 'NONREG') {
+                currentDb = visitorDatabase;
+                filteredKeys = Object.keys(visitorDatabase).filter(id => visitorDatabase[id].pos === 'NON-REGULAR');
+            }
+
+            if (filteredKeys.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#94a3b8; padding:30px; font-size: 1.1rem;">No registered records found in this category.</td></tr>`;
+                return;
+            }
+
+            filteredKeys.forEach((id, index) => {
+                const person = currentDb[id];
+                const imgTag = person.facePhoto ? `<img src="${person.facePhoto}" class="face-preview-img">` : '👤 No Photo';
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="text-align: center; font-weight: bold; color: #2563eb;">${index + 1}</td>
+                    <td>${imgTag}</td>
+                    <td><strong>${id}</strong></td>
+                    <td>${person.name}</td>
+                    <td>${person.dept}</td>
+                    <td>${person.pos}</td>
+                    <td><button class="btn btn-action-unreg" onclick="unregisterPerson('${id}', '${currentDirectoryTab}')">UNREGISTER</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function renderDirectory() {
+            const tbody = document.getElementById('directory-table-body');
+            tbody.innerHTML = '';
+            
+            let filteredKeys = [];
+            let currentDb = {};
+
+            if (currentDirectoryTab === 'EMP') {
+                currentDb = employeeDatabase;
+                filteredKeys = Object.keys(employeeDatabase);
+            } else if (currentDirectoryTab === 'VIS') {
+                currentDb = visitorDatabase;
+                filteredKeys = Object.keys(visitorDatabase).filter(id => visitorDatabase[id].pos === 'VISITOR');
+            } else if (currentDirectoryTab === 'NONREG') {
+                currentDb = visitorDatabase;
+                filteredKeys = Object.keys(visitorDatabase).filter(id => visitorDatabase[id].pos === 'NON-REGULAR');
+            }
+
+            if (filteredKeys.length === 0) {
+                let tabName = currentDirectoryTab === 'EMP' ? 'employees' : (currentDirectoryTab === 'VIS' ? 'visitors' : 'non-regulars');
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:15px;">No ${tabName} registered.</td></tr>`;
+                return;
+            }
+
+            filteredKeys.forEach(id => {
+                const person = currentDb[id];
+                const imgTag = person.facePhoto ? `<img src="${person.facePhoto}" class="face-preview-img">` : '👤';
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${imgTag}</td><td><strong>${id}</strong></td><td>${person.name}</td><td>${person.dept}</td><td>${person.pos}</td>
+                    <td><button class="btn btn-action-unreg" onclick="unregisterPerson('${id}', '${currentDirectoryTab}')">UNREGISTER</button>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        async function unregisterPerson(id, type) {
+            const db = type === 'EMP' ? employeeDatabase : visitorDatabase;
+            const name = db[id].name;
+            const pwd = await requestPassword(`Enter password to unregister ${name}:`);
+            if (pwd === null) return;
+            if (pwd === RESET_PASSWORD) {
+                delete db[id];
+                saveToStorage(); 
+                renderDirectory(); 
+                renderModalDirectoryTable();
+                updateDashboardMetrics();
+                alert(`Record removed.`);
+            } else {
+                alert("Incorrect password.");
+            }
+        }
+
+        function updateDashboardMetrics() {
+            const today = getDateString();
+            const todayLogs = attendanceLogs.filter(log => log.date === today && log.status !== 'INCIDENT');
+
+            const totalRegistered = Object.keys(employeeDatabase).length;
+            const totalPresentToday = todayLogs.length; 
+            const currentOnsite = todayLogs.filter(log => log.status === 'INSIDE').length;
+            const totalOutToday = todayLogs.filter(log => log.status === 'OUT').length;
+            const currentVisitors = todayLogs.filter(log => log.pos.includes('VISITOR') && log.status === 'INSIDE').length;
+            const currentNonReg = todayLogs.filter(log => log.pos.includes('NON-REGULAR') && log.status === 'INSIDE').length;
+
+            let safeDays = 0;
+            if (attendanceLogs.length > 0) {
+                let startDate = lastLtiDate ? new Date(lastLtiDate) : new Date(attendanceLogs[attendanceLogs.length - 1].date);
+                let diffTime = new Date(today) - startDate;
+                safeDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                if (safeDays < 0) safeDays = 0;
+            }
+
+            const hoursPerDay = 8;
+            const computedManHours = totalPresentToday * hoursPerDay * safeDays;
+
+            document.getElementById('metric-total').innerText = totalRegistered;
+            document.getElementById('metric-present').innerText = totalPresentToday;
+            document.getElementById('metric-out').innerText = totalOutToday;
+            document.getElementById('metric-current').innerText = currentOnsite;
+            document.getElementById('metric-visitors').innerText = currentVisitors;
+            document.getElementById('metric-nonreg').innerText = currentNonReg;
+            document.getElementById('metric-manhours').innerText = computedManHours.toLocaleString() + " hrs";
+            document.getElementById('metric-safedays').innerText = safeDays + " Days";
+
+            document.getElementById('idle-total').innerText = totalRegistered;
+            document.getElementById('idle-present').innerText = totalPresentToday;
+            document.getElementById('idle-out').innerText = totalOutToday;
+            document.getElementById('idle-current').innerText = currentOnsite;
+            document.getElementById('idle-visitors').innerText = currentVisitors;
+            document.getElementById('idle-nonreg').innerText = currentNonReg;
+            document.getElementById('idle-manhours').innerText = computedManHours.toLocaleString() + " hrs";
+            document.getElementById('idle-safedays').innerText = safeDays + " Days";
+        }
+
+        function clearRegForm() {
+            document.getElementById('reg-id').value = ''; document.getElementById('reg-name').value = '';
+            document.getElementById('reg-dept').value = ''; document.getElementById('reg-pos').value = '';
+            tempCapturedFaceReg = "";
+            document.getElementById('reg-face-preview').style.display = 'none';
+        }
+
+        function clearVisitorForm() {
+            document.getElementById('vis-name').value = ''; document.getElementById('vis-company').value = '';
+            document.getElementById('vis-id').value = '';
+            tempCapturedFaceVis = "";
+            document.getElementById('vis-face-preview').style.display = 'none';
+        }
+
+        async function resetSearch() {
+            const pwd = await requestPassword("Enter password to reset search filters:");
+            if (pwd === null) return;
+            if (pwd === RESET_PASSWORD) {
+                document.getElementById('search-query').value = ''; 
+                document.getElementById('filter-category').value = 'ALL';
+                document.getElementById('filter-status').value = 'ALL';
+                document.getElementById('filter-date').value = ''; 
+                filterHistory();
+                alert("Search filters reset successfully.");
+            } else {
+                alert("Incorrect password.");
+            }
+        }
+
+        function filterCardCategory(category) {
+            const today = getDateString();
+            let filtered = [];
+            let modalTitle = "";
+
+            if (category === 'TOTAL_REG') { 
+                switchDirectoryTab('EMP');
+                return; 
+            }
+
+            if (category === 'PRESENT') {
+                modalTitle = `TOTAL OF TIME-IN TODAY (${today})`;
+                filtered = attendanceLogs.filter(log => log.date === today && log.status !== 'INCIDENT');
+            } else if (category === 'OUT') {
+                modalTitle = `TOTAL OF TIME-OUT TODAY (${today})`;
+                filtered = attendanceLogs.filter(log => log.date === today && log.status === 'OUT');
+            } else if (category === 'CURRENT') {
+                modalTitle = `CURRENTLY ON-SITE (${today})`;
+                filtered = attendanceLogs.filter(log => log.status === 'INSIDE' && log.date === today);
+            } else if (category === 'VISITOR') {
+                modalTitle = `VISITORS PRESENT TODAY (${today})`;
+                filtered = attendanceLogs.filter(log => log.date === today && log.pos.includes('VISITOR') && log.status === 'INSIDE');
+            } else if (category === 'NONREG') {
+                modalTitle = `NON-REGULAR / CONTRACTORS PRESENT TODAY (${today})`;
+                filtered = attendanceLogs.filter(log => log.date === today && log.pos.includes('NON-REGULAR') && log.status === 'INSIDE');
+            }
+
+            openMetricsModal(modalTitle, filtered);
+        }
+
+        function openMetricsModal(titleText, logData) {
+            const modal = document.getElementById('metrics-modal');
+            document.getElementById('modal-metrics-title').innerText = titleText;
+            
+            const tbody = document.getElementById('modal-metrics-table-body');
+            tbody.innerHTML = '';
+
+            if (logData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; color:#94a3b8; padding:30px; font-size: 1.1rem;">No records found for this category today.</td></tr>`;
+            } else {
+                logData.forEach((log, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td style="text-align: center; font-weight: bold; color: #2563eb;">${index + 1}</td>
+                        <td><strong>${log.logId}</strong></td>
+                        <td>${log.date}</td>
+                        <td>${log.empId}</td>
+                        <td>${log.name}</td>
+                        <td>${log.dept}</td>
+                        <td>${log.pos}</td>
+                        <td>${log.incidentDetails || '--'}</td>
+                        <td><strong style="color:#16a34a;">${log.timeIn}</strong></td>
+                        <td><strong style="color:#dc2626;">${log.timeOut}</strong></td>
+                        <td><span class="badge status-${log.status}">${log.status}</span></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeMetricsModal() {
+            document.getElementById('metrics-modal').classList.remove('active');
+        }
+
+        function showManHoursComputation() {
+            const today = getDateString();
+            const todayLogs = attendanceLogs.filter(log => log.date === today && log.status !== 'INCIDENT');
+            const numWorkers = todayLogs.length;
+
+            let safeDays = 0;
+            let startDateStr = 'System Start Date';
+            if (attendanceLogs.length > 0) {
+                let startDate = lastLtiDate ? new Date(lastLtiDate) : new Date(attendanceLogs[attendanceLogs.length - 1].date);
+                startDateStr = startDate.toISOString().split('T')[0];
+                let diffTime = new Date(today) - startDate;
+                safeDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                if (safeDays < 0) safeDays = 0;
+            }
+
+            const hoursPerDay = 8; 
+            const computedManHours = numWorkers * hoursPerDay * safeDays;
+
+            document.getElementById('modal-comp-title').innerText = 'SAFETY MAN-HOURS COMPUTATION';
+            
+            const body = document.getElementById('modal-comp-body');
+            body.innerHTML = `
+                <p style="font-size: 1.1rem; color: #475569; margin-bottom: 15px;">Standard OSHA/DOLE Safe Work Hours Calculation Method</p>
+                <div style="background-color: #eff6ff; border-left: 5px solid #2563eb; padding: 15px; border-radius: 6px; font-weight: bold; color: #1e40af; margin-bottom: 20px;">
+                    FORMULA: Total Time-Ins (Today) × Work Hours per Day (8 hrs) × Safe Days (Without LTI)
+                </div>
+
+                <div class="comp-card-grid">
+                    <div class="comp-box">
+                        <div style="font-weight: bold; color: #64748b; font-size: 0.9rem; margin-bottom: 8px;">TIME-INS TODAY</div>
+                        <div class="comp-val" style="color: #2563eb;">${numWorkers}</div>
+                    </div>
+                    <div class="comp-box">
+                        <div style="font-weight: bold; color: #64748b; font-size: 0.9rem; margin-bottom: 8px;">HOURS / SHIFT</div>
+                        <div class="comp-val" style="color: #d97706;">8 hrs</div>
+                    </div>
+                    <div class="comp-box">
+                        <div style="font-weight: bold; color: #64748b; font-size: 0.9rem; margin-bottom: 8px;">SAFE DAYS (NO LTI)</div>
+                        <div class="comp-val" style="color: #0d9488;">${safeDays} Days</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 15px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px dashed #cbd5e1;">
+                    <p><strong>Tracking Start Date:</strong> ${startDateStr}</p>
+                    <p><strong>Computation Date:</strong> ${today}</p>
+                    <p><strong>Mathematical Breakdown:</strong> ${numWorkers} × 8 × ${safeDays}</p>
+                </div>
+
+                <div class="comp-result-box">
+                    <h3>TOTAL SAFE MAN-HOURS ACCUMULATED</h3>
+                    <div class="result-val">${computedManHours.toLocaleString()} HOURS</div>
+                </div>
+            `;
+
+            document.getElementById('computation-modal').classList.add('active');
+        }
+
+        function showSafeDaysComputation() {
+            const today = getDateString();
+            let safeDays = 0;
+            let startDateStr = 'System Start Date';
+            
+            if (attendanceLogs.length > 0) {
+                let startDate = lastLtiDate ? new Date(lastLtiDate) : new Date(attendanceLogs[attendanceLogs.length - 1].date);
+                startDateStr = startDate.toISOString().split('T')[0];
+                let diffTime = new Date(today) - startDate;
+                safeDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                if (safeDays < 0) safeDays = 0;
+            }
+
+            document.getElementById('modal-comp-title').innerText = 'SAFE DAYS (NO LTI) COMPUTATION';
+
+            const body = document.getElementById('modal-comp-body');
+            body.innerHTML = `
+                <p style="font-size: 1.1rem; color: #475569; margin-bottom: 15px;">DOLE Standard Consecutive Days Without Lost Time Incident (LTI)</p>
+                <div style="background-color: #f0fdf4; border-left: 5px solid #16a34a; padding: 15px; border-radius: 6px; font-weight: bold; color: #166534; margin-bottom: 20px;">
+                    FORMULA: Current Date - Date of Last LTI / Incident Reset Date
+                </div>
+
+                <div class="comp-card-grid">
+                    <div class="comp-box">
+                        <div style="font-weight: bold; color: #64748b; font-size: 0.9rem; margin-bottom: 8px;">START / RESET DATE</div>
+                        <div class="comp-val" style="font-size: 1.5rem; color: #dc2626;">${startDateStr}</div>
+                    </div>
+                    <div class="comp-box">
+                        <div style="font-weight: bold; color: #64748b; font-size: 0.9rem; margin-bottom: 8px;">CURRENT DATE</div>
+                        <div class="comp-val" style="font-size: 1.5rem; color: #2563eb;">${today}</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 15px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px dashed #cbd5e1;">
+                    <p><strong>Note:</strong> Kapag may nailagay na 'LTI' Severity Incident sa Safety Module, magre-reset ang numerong ito pabalik sa 0.</p>
+                </div>
+
+                <div class="comp-result-box" style="background-color: #f0fdfa; border-color: #5eead4;">
+                    <h3 style="color: #0f766e;">TOTAL CONSECUTIVE SAFE DAYS</h3>
+                    <div class="result-val" style="color: #0d9488;">${safeDays} DAYS</div>
+                </div>
+            `;
+
+            document.getElementById('computation-modal').classList.add('active');
+        }
+
+        function closeComputationModal() {
+            document.getElementById('computation-modal').classList.remove('active');
+        }
+
+        async function resetAllData() {
+            const pwd = await requestPassword("Enter password to clear system data:");
+            if (pwd === null) return;
+            if (pwd === RESET_PASSWORD) {
+                if (confirm("Reset all data?")) {
+                    employeeDatabase = {}; visitorDatabase = {}; attendanceLogs = []; logCounter = 1000; passCounter = 100; lastLtiDate = null;
+                    localStorage.clear(); clearRegForm(); clearVisitorForm(); renderDirectory(); filterHistory(); applyRegistrationDefaults();
+                    alert("System reset complete.");
+                }
+            } else {
+                alert("Incorrect password.");
+            }
+        }
+
+        function setupHardwareScanner() {
+            document.getElementById('clock-id').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const empId = this.value.trim();
+                    if (!empId) return;
+                    const today = getDateString();
+                    const activeRecord = attendanceLogs.find(log => log.empId === empId && log.date === today && log.status === 'INSIDE');
+                    if (activeRecord) processQuickClock('OUT');
+                    else processQuickClock('IN');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
